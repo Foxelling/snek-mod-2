@@ -1,7 +1,6 @@
 "use strict";
 /**
  * The extendable storage buildtype, extending building disallows connecting to core behavior (see https://github.com/Anuken/Mindustry/blob/2ad41a904753a47f6fb1a7b64dbea46204ce207e/core/src/mindustry/world/blocks/storage/CoreBlock.java#L788C1-L788C85 )
- * 
  */
 let StorageGraph = require("storage_graph");
 let chainContainerBuilding = () => extend(Building, {
@@ -36,10 +35,6 @@ let chainContainerBuilding = () => extend(Building, {
     },
 
     acceptItem(source, item) {
-        // if(this._storageGraph == null){
-        //     return this.items.get(item) < this.getMaximumAccepted(item);
-        // }
-
         return this.items.get(item) < this.getMaximumAccepted(item);
     },
     getMaximumAccepted(item) {
@@ -49,7 +44,8 @@ let chainContainerBuilding = () => extend(Building, {
             return this._storageGraph.getCapacity();
         }
     },
-
+    
+    // big boom
     // explosionItemCap(){
     //     return this._storageGraph != null ? Math.min(this.itemCapacity/60, 6) : this.itemCapacity
     // },
