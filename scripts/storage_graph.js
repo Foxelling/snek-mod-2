@@ -7,10 +7,10 @@
 const MAX_CAPACITY = 100000;
 
 let graphId = 0;
-function StorageGraph(self) {
+function StorageGraph() {
     this.queue = new Queue();
     this.closedSet = new IntSet();
-    // this.buildings = new Seq(); // currently not used anywhere, remove?
+    this.buildings = new Seq();
     this.items = new ItemModule();
     this.itemCapacity = 0;
     this.graphId = graphId++;
@@ -18,16 +18,16 @@ function StorageGraph(self) {
     this.hasCore = false;
     this.coreCapacity = 0; // Cached cap
 };
-StorageGraph.prototype.getCapacity = () => {
+StorageGraph.prototype.getCapacity = function() {
     return Math.min(this.itemCapacity, MAX_CAPACITY);
 };
-StorageGraph.prototype.getTotalCapacity = () => {
+StorageGraph.prototype.getTotalCapacity = function() {
     return Math.min(this.getCapacity() + this.coreCapacity, MAX_CAPACITY);
-}
-StorageGraph.prototype.add = (entity) => {
+};
+StorageGraph.prototype.add = function(entity) {
     if (entity.getGraph() != this) {
         if (entity.getGraph() == null) {
-            this.items.add(entity.items)
+            this.items.add(entity.items);
         }
 
         entity.setGraph(this);
@@ -37,7 +37,7 @@ StorageGraph.prototype.add = (entity) => {
     }
 };
 
-StorageGraph.prototype.addGraph = (graph) => {
+StorageGraph.prototype.addGraph = function(graph) {
     if (graph == this) return;
 
     if (this.buildings.size < graph.buildings.size) {
@@ -51,7 +51,7 @@ StorageGraph.prototype.addGraph = (graph) => {
     });
 };
 // Currently nothing using this, use when removing?
-// StorageGraph.prototype.reflow = (entity) => {
+// StorageGraph.prototype.reflow = function(entity) {
 //     this.queue.clear();
 //     this.queue.addLast(entity)
 //     this.closedSet.clear()
@@ -65,7 +65,7 @@ StorageGraph.prototype.addGraph = (graph) => {
 //         }
 //     }
 // };
-StorageGraph.prototype.remove = (entity) => {
+StorageGraph.prototype.remove = function(entity) {
     entity.getStorageConnections().each(other => {
         if(other.getGraph() != this) return;
 
@@ -97,27 +97,30 @@ StorageGraph.prototype.remove = (entity) => {
 
 // Centralized handling allows for clean core support
 // TODO: consider if revealed when using fx
-StorageGraph.prototype.handleItem = (source, item) => {
+StorageGraph.prototype.handleItem = function(source, item) {
     this.items.add(item, 1);
 };
-StorageGraph.prototype.acceptItem = (source, item) => {
-    return this.items.get(item) < this.getCapacity();
+StorageGraph.prototype.acceptItem = function(source, item) {
+    return this.items.get(item) < this.getTotalCapacity();
 };
-StorageGraph.prototype.acceptStack = (item, amount, source) => { 
+StorageGraph.prototype.acceptStack = function(item, amount, source) { 
     if(this.acceptItem(this, item) && source == null){
-        return Math.min(this.getCapacity(item) - this.items.get(item), amount);
+        return Math.min(this.getTotalCapacity(item) - this.items.get(item), amount);
     }else{
         return 0;
     }
 };
-StorageGraph.prototype.removeStack = (item, amount) => {
-    let amount = Math.min(amount, this.items.get(item));
+StorageGraph.prototype.removeStack = function(item, amount) {
+    let a = Math.min(amount, this.items.get(item));
 
-    this.items.remove(item, amount);
-    return amount;
+    this.items.remove(item, a);
+    return a;
 };
-StorageGraph.prototype.handleStack = (item, amount, source) => {
+StorageGraph.prototype.handleStack = function(item, amount, source) {
     this.items.add(item, amount)
 };
+StorageGraph.prototype.getMaximumAccepted = function() { // TODO: consider core incineration
+    return this.getTotalCapacity();
+}
 
 module.exports = StorageGraph;

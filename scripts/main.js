@@ -1,8 +1,8 @@
 let {chainContainerBuilding, chainCoreBuilding} = require("chain_buildings");
 
-Blocks.container.buildType = chainContainerBuilding;
-Blocks.vault.buildType = chainContainerBuilding;
+Blocks.container.buildType = chainContainerBuilding(Blocks.container);
+Blocks.vault.buildType = chainContainerBuilding(Blocks.vault);
 
-Blocks.coreSharded.buildType = chainCoreBuilding;
-Blocks.coreFoundation.buildType = chainCoreBuilding;
-Blocks.coreNucleus.buildType = chainCoreBuilding;
+Blocks.coreShard.buildType = chainCoreBuilding(Blocks.coreShard);
+Blocks.coreFoundation.buildType = chainCoreBuilding(Blocks.coreFoundation);
+Blocks.coreNucleus.buildType = chainCoreBuilding(Blocks.coreNucleus);
