@@ -29,7 +29,7 @@ StorageGraph.prototype.getTotalCapacity = function() {
 StorageGraph.prototype.add = function(entity) {
     if (entity.getGraph() != this) {
         this.buildings.add(entity);
-       
+
         if (entity.getGraph() == null) {
             this.items.add(entity.items);
         }
@@ -39,20 +39,22 @@ StorageGraph.prototype.add = function(entity) {
         if (entity instanceof CoreBlock.CoreBuild){
             if(!this.hasCore){ // If graph already has a core, then all cores have already been accounted for
                 // TODO: cleanup
-                this.hasCore = true;            
+                this.hasCore = true;
+                this.coreCapacity += entity.block.itemCapacity;
+                
                 // very laggy
                 Vars.state.teams.cores(entity.team).each(core => {
-                    this.coreCapacity += core.block.itemCapacity;
                     if(entity == core) return;
 
-                    core.items = this.items;
-                    core.setGraph(this);                
+                    this.coreCapacity += core.block.itemCapacity;
+                    this.reflow(core);
                 });
             }
         } else {
             this.itemCapacity += entity.block.itemCapacity;
         }
         if(this.hasCore){
+            print(this.coreCapacity);
             Vars.state.teams.cores(entity.team).each(core => {
                 core.storageCapacity = this.getTotalCapacity();
             });
@@ -81,11 +83,11 @@ StorageGraph.prototype.reflow = function(entity) {
     while(this.queue.size > 0){
         var child = this.queue.removeFirst();
         this.add(child);
-        for(let next in child.getStorageConnections()){
+        child.getStorageConnections().each(next => {
             if(this.closedSet.add(next.pos())){
                 this.queue.addLast(next);
             }
-        }
+        });
     }
 };
 StorageGraph.prototype.remove = function(entity) {

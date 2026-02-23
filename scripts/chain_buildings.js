@@ -95,7 +95,8 @@ let chainMethods = {
         // relevant code here
         let percent = 1;
         if(this._storageGraph != null){
-            let storageCapacity = this instanceof CoreBlock.CoreBlockBuild ? this._storageGraph.coreCapacity : this.block.itemCapacity;
+            // let storageCapacity = this instanceof CoreBlock.CoreBuild ? this._storageGraph.coreCapacity : this.block.itemCapacity;
+            let storageCapacity = this.block.itemCapacity; // THIS MIGHT AND PROBABLY WILL LOSE ITEMS SOMETIMES WHEN LOADING MAPS WITH MULTIPLE CORES
             percent = storageCapacity / this._storageGraph.getTotalCapacity();
         }
         let items = new ItemModule();
@@ -177,7 +178,25 @@ let chainContainerBuilding = (block) => () => {
  * Currently very hacky, storageCapacity should be a shared resource
  */
 let chainCoreBuilding = (block) => () => extend(CoreBlock.CoreBuild, block, Object.assign({}, chainMethods, {
+    // created(){
+    //     this.super$created();
+
+    // },
+
     onProximityUpdate(){
+        // this.noSleep();
+        
+        // Vars.state.teams.registerCore(this);
+
+        // if(this._storageGraph == null) {
+        //     let cap = 0;
+        //     Vars.state.teams.cores(this.team).each(core => {
+        //         core.items = this.items;
+        //         cap += core.block.itemCapacity;
+        //     });
+        //     this.storageCapacity = cap;
+        // }
+
         this.super$onProximityUpdate(); // TODO: loop through cores once
 
         // superclass fucks up the storageCapacity
@@ -188,10 +207,14 @@ let chainCoreBuilding = (block) => () => extend(CoreBlock.CoreBuild, block, Obje
             return;
         }
 
-        // only one graph for cores exist
-        let graphCore = Vars.state.teams.cores(this.team).find(c => c.getGraph() != null);
+        // only one graph for cores must exist
+
+        let graphCore = Vars.state.teams.cores(this.team).find(c => c != this && c.getGraph() != null);
         if(graphCore != null){
-            graphCore.getGraph().add(this);
+            let graph = new StorageGraph();
+            graph.add(this);
+            
+            graphCore.getGraph().addGraph(graph);
         }
         // if nothing is connected, then superclass did it properly
     },
