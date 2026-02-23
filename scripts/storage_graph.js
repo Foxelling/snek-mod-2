@@ -54,7 +54,6 @@ StorageGraph.prototype.add = function(entity) {
             this.itemCapacity += entity.block.itemCapacity;
         }
         if(this.hasCore){
-            print(this.coreCapacity);
             Vars.state.teams.cores(entity.team).each(core => {
                 core.storageCapacity = this.getTotalCapacity();
             });
