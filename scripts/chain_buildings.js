@@ -93,7 +93,11 @@ let chainMethods = {
         write.b(this.moduleBitmask());
 
         // relevant code here
-        let percent = this._storageGraph != null ? this.block.itemCapacity / this._storageGraph.getTotalCapacity() : 1;
+        let percent = 1;
+        if(this._storageGraph != null){
+            let storageCapacity = this instanceof CoreBlock.CoreBlockBuild ? this._storageGraph.coreCapacity : this.block.itemCapacity;
+            percent = storageCapacity / this._storageGraph.getTotalCapacity();
+        }
         let items = new ItemModule();
         Vars.content.items().each(item => {
             if(this.items.has(item)){
@@ -145,10 +149,15 @@ let chainContainerBuilding = (block) => () => {
             if(this._storageGraph == null) return;
 
             let percent = this.block.itemCapacity / this._storageGraph.getCapacity();
-
+            
             Vars.content.items().each(item => {
                 if(this.items.has(item)){
-                    this.items.remove(item, this.items.get(item) * percent);
+                    let amount = this.items.get(item) * percent;
+
+                    if(team == state.rules.defaultTeam && state.isCampaign()){
+                        Vars.state.rules.sector.info.handleCoreItem(item, -amount);
+                    }
+                    this.items.remove(item, amount);
                 }
             });
         },
@@ -176,6 +185,7 @@ let chainCoreBuilding = (block) => () => extend(CoreBlock.CoreBuild, block, Obje
             Vars.state.teams.cores(this.team).each(core => {
                 core.storageCapacity = this._storageGraph.getTotalCapacity();
             });
+            return;
         }
 
         // only one graph for cores exist
