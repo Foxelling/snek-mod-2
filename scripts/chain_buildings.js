@@ -76,8 +76,47 @@ let chainMethods = {
     getStorageConnections() {
         return this.proximity.select(boolf(other => other != null && other.team == this.team && this.connectsStorageTo(other)));
     },
+    // Assume all cores have StorageGraph
     connectsStorageTo(other) {
         return other.block.coreMerge || other.block instanceof CoreBlock;
+    },
+    // hack
+    writeBase(write){
+        let writeVisibility = Vars.state.rules.fog && this.visibleFlags != 0;
+
+        write.f(this.health);
+        write.b(this.rotation | 0b10000000);
+        write.b(this.team.id);
+        write.b(this.writeVisibility ? 4 : 3);
+        write.b(this.enabled ? 1 : 0);
+
+        write.b(this.moduleBitmask());
+
+        // relevant code here
+        let percent = this._storageGraph != null ? this.block.itemCapacity / this._storageGraph.getTotalCapacity() : 1;
+        let items = new ItemModule();
+        Vars.content.items().each(item => {
+            if(this.items.has(item)){
+                items.add(item, this.items.get(item) * percent);
+            }
+        });
+        items.write(write);
+
+        // if(this.timeScale != 1){
+        //     write.f(timeScale);
+        //     write.f(timeScaleDuration);
+        // }
+
+        if(this.lastDisabler != null && this.lastDisabler.isValid()){
+            write.i(this.lastDisabler.pos());
+        }
+
+        write.b(Mathf.clamp(this.efficiency) * 255);
+        write.b(Mathf.clamp(this.optionalEfficiency) * 255);
+
+        if(this.writeVisibility){
+            write.l(this.visibleFlags);
+        }
     },
 };
 
@@ -119,46 +158,6 @@ let chainContainerBuilding = (block) => () => {
 
             return this.super$getMaximumAccepted();
         },
-
-        // hack
-        writeBase(write){
-            let writeVisibility = Vars.state.rules.fog && this.visibleFlags != 0;
-
-            write.f(this.health);
-            write.b(this.rotation | 0b10000000);
-            write.b(this.team.id);
-            write.b(this.writeVisibility ? 4 : 3);
-            write.b(this.enabled ? 1 : 0);
-
-            write.b(this.moduleBitmask());
-
-            // relevant code here
-            let percent = this._storageGraph != null ? this.block.itemCapacity / this._storageGraph.getCapacity() : 1;
-            let items = new ItemModule();
-            Vars.content.items().each(item => {
-                if(this.items.has(item)){
-                    items.add(item, this.items.get(item) * percent);
-                }
-            });
-            items.write(write);
-
-            // if(this.timeScale != 1){
-            //     write.f(timeScale);
-            //     write.f(timeScaleDuration);
-            // }
-
-            if(this.lastDisabler != null && this.lastDisabler.isValid()){
-                write.i(this.lastDisabler.pos());
-            }
-
-            write.b(Mathf.clamp(this.efficiency) * 255);
-            write.b(Mathf.clamp(this.optionalEfficiency) * 255);
-
-            if(this.writeVisibility){
-                write.l(this.visibleFlags);
-            }
-        },
-        
     }));
     build.block = block;
     return build;
@@ -172,19 +171,17 @@ let chainCoreBuilding = (block) => () => extend(CoreBlock.CoreBuild, block, Obje
     onProximityUpdate(){
         this.super$onProximityUpdate(); // TODO: loop through cores once
 
+        // superclass fucks up the storageCapacity
         if(this._storageGraph != null) {
-            this.storageCapacity = this._storageGraph.getTotalCapacity();
-            return;
+            Vars.state.teams.cores(this.team).each(core => {
+                core.storageCapacity = this._storageGraph.getTotalCapacity();
+            });
         }
 
+        // only one graph for cores exist
         let graphCore = Vars.state.teams.cores(this.team).find(c => c.getGraph() != null);
         if(graphCore != null){
-            this.storageCapacity = graphCore.getGraph().getTotalCapacity();
-            // storageCapacity needs to be handled everywhere... pain
-            // Unfortunately, I need to support multiple cores
-            Vars.state.teams.cores(this.team).each(c => {
-                c.storageCapacity = this.storageCapacity;
-            });
+            graphCore.getGraph().add(this);
         }
         // if nothing is connected, then superclass did it properly
     },

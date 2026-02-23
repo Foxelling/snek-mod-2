@@ -17,6 +17,8 @@ function StorageGraph() {
 
     this.hasCore = false;
     this.coreCapacity = 0; // Cached cap
+
+    // this.coreWritten = false; // For writing
 };
 StorageGraph.prototype.getCapacity = function() {
     return Math.min(this.itemCapacity, MAX_CAPACITY);
@@ -26,14 +28,35 @@ StorageGraph.prototype.getTotalCapacity = function() {
 };
 StorageGraph.prototype.add = function(entity) {
     if (entity.getGraph() != this) {
+        this.buildings.add(entity);
+       
         if (entity.getGraph() == null) {
             this.items.add(entity.items);
         }
-
         entity.setGraph(this);
         entity.items = this.items;
-        this.buildings.add(entity);
-        this.itemCapacity += entity.block.itemCapacity
+
+        if (entity instanceof CoreBlock.CoreBuild){
+            if(!this.hasCore){ // If graph already has a core, then all cores have already been accounted for
+                // TODO: cleanup
+                this.hasCore = true;            
+                // very laggy
+                Vars.state.teams.cores(entity.team).each(core => {
+                    this.coreCapacity += core.block.itemCapacity;
+                    if(entity == core) return;
+
+                    core.items = this.items;
+                    core.setGraph(this);                
+                });
+            }
+        } else {
+            this.itemCapacity += entity.block.itemCapacity;
+        }
+        if(this.hasCore){
+            Vars.state.teams.cores(entity.team).each(core => {
+                core.storageCapacity = this.getTotalCapacity();
+            });
+        }
     }
 };
 
@@ -51,20 +74,20 @@ StorageGraph.prototype.addGraph = function(graph) {
     });
 };
 // Currently nothing using this, use when removing?
-// StorageGraph.prototype.reflow = function(entity) {
-//     this.queue.clear();
-//     this.queue.addLast(entity)
-//     this.closedSet.clear()
-//     while(this.queue.size > 0){
-//         var child = this.queue.removeFirst();
-//         this.add(child);
-//         for(let next in child.getStorageConnections()){
-//             if(this.closedSet.add(next.pos())){
-//                 this.queue.addLast(next);
-//             }
-//         }
-//     }
-// };
+StorageGraph.prototype.reflow = function(entity) {
+    this.queue.clear();
+    this.queue.addLast(entity)
+    this.closedSet.clear()
+    while(this.queue.size > 0){
+        var child = this.queue.removeFirst();
+        this.add(child);
+        for(let next in child.getStorageConnections()){
+            if(this.closedSet.add(next.pos())){
+                this.queue.addLast(next);
+            }
+        }
+    }
+};
 StorageGraph.prototype.remove = function(entity) {
     entity.getStorageConnections().each(other => {
         if(other.getGraph() != this) return;
@@ -85,8 +108,14 @@ StorageGraph.prototype.remove = function(entity) {
             });
         }
 
-        let graphCap = graph.getCapacity();
-        let percent = graphCap / (this.getCapacity() - entity.block.itemCapacity);
+        // if(graph.hasCore){
+        //     Vars.state.teams.cores(other.team).each(core => {
+        //         core.storageCapacity = this.getTotalCapacity();
+        //     });
+        // }
+        
+        let graphCap = graph.getTotalCapacity();
+        let percent = graphCap / (this.getTotalCapacity() - entity.block.itemCapacity);
         Vars.content.items().each(item => {
             if(this.items.has(item)){
                 graph.items.add(item, Math.min(this.items.get(item) * percent, graphCap))
