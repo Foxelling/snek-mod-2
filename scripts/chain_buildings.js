@@ -155,7 +155,7 @@ let chainContainerBuilding = (block) => () => {
                 if(this.items.has(item)){
                     let amount = this.items.get(item) * percent;
 
-                    if(team == state.rules.defaultTeam && state.isCampaign()){
+                    if(this.team == Vars.state.rules.defaultTeam && Vars.state.isCampaign()){
                         Vars.state.rules.sector.info.handleCoreItem(item, -amount);
                     }
                     this.items.remove(item, amount);
@@ -166,7 +166,7 @@ let chainContainerBuilding = (block) => () => {
         getMaximumAccepted() {
             if(this._storageGraph != null) return this._storageGraph.getMaximumAccepted();
 
-            return this.super$getMaximumAccepted();
+            return this.itemCapacity;
         },
     }));
     build.block = block;
@@ -222,7 +222,7 @@ let chainCoreBuilding = (block) => () => extend(CoreBlock.CoreBuild, block, Obje
     getMaximumAccepted() { // TODO: consider core incineration
         if(this._storageGraph != null) return this._storageGraph.getMaximumAccepted();
 
-        return this.super$getMaximumAccepted();
+        return this.storageCapacity;
     }
 }));
 
