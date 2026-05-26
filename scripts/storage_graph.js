@@ -128,14 +128,17 @@ StorageGraph.prototype.remove = function(entity) {
 // Centralized handling allows for clean core support
 // TODO: consider if revealed when using fx
 StorageGraph.prototype.handleItem = function(source, item) {
-    this.items.add(item, 1);
+    if (this.items.get(item) < this.getTotalCapacity()) {
+        this.items.add(item, 1);
+    }
 };
 StorageGraph.prototype.acceptItem = function(source, item) {
+    if (this.hasCore) return true;
     return this.items.get(item) < this.getTotalCapacity();
 };
 StorageGraph.prototype.acceptStack = function(item, amount, source) { 
-    if(this.acceptItem(this, item) && source == null){
-        return Math.min(this.getTotalCapacity(item) - this.items.get(item), amount);
+    if(this.acceptItem(source, item)){
+        return Math.min(this.getTotalCapacity() - this.items.get(item), amount);
     }else{
         return 0;
     }
@@ -147,7 +150,10 @@ StorageGraph.prototype.removeStack = function(item, amount) {
     return a;
 };
 StorageGraph.prototype.handleStack = function(item, amount, source) {
-    this.items.add(item, amount)
+    let space = this.getTotalCapacity() - this.items.get(item);
+    if (space > 0) {
+        this.items.add(item, Math.min(amount, space));
+    }
 };
 StorageGraph.prototype.getMaximumAccepted = function() { // TODO: consider core incineration
     return this.getTotalCapacity();
