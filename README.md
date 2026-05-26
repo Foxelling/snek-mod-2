@@ -1,9 +1,10 @@
 # Container Chaining
 
-Brings back the container chaining mechanic from Mindustry v4 beta
+Brings back the container chaining mechanic from Mindustry v4 beta.
 
-Current limitations:
-- saving, connecting to a server relies on splitting the containers' contents which result in rounding errors in the save or desync in the client, losing you some items depending on the amount of containers you have
-- multiple cores may delete more items than expected
+**Changes in this fork:**
+* Fixed a bug where single (unchained) containers would not accept any items.
+* Fixed AI behavior: units can now properly drop mined items into the core.
+* Fixed item incineration: excess items are now correctly destroyed at the core without clogging the conveyors.
 
 ![Screenshot](./screenshot.png)
