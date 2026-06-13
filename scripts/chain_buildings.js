@@ -57,13 +57,13 @@ let chainMethods = {
         this._storageGraph.remove(this);
     },
     updateStorageGraph() {
-        let con = this.getStorageConnections();
+        if (this._storageGraph == null) {
+            let graph = new StorageGraph();
+            graph.add(this);
+        }
 
+        let con = this.getStorageConnections();
         con.each(other => {
-            if (this._storageGraph == null) {
-                let graph = new StorageGraph();
-                graph.add(this);
-            }
             if (other.getGraph() == null) {
                 this._storageGraph.add(other);
             } else {
