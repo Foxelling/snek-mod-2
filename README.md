@@ -1,12 +1,12 @@
 # Container Chaining
 
-Brings back the container chaining mechanic from Mindustry v4 beta.
+The mod brings back the container chaining mechanic from the Mindustry v4 beta. Also works with modded storages.
 
 **Changes in this fork:**
 * Fixed a bug where single (unchained) containers would not accept any items.
 * Fixed AI behavior: units can now properly drop mined items into the core.
 * Fixed item incineration: excess items are now correctly destroyed at the core without clogging the conveyors.
+* Fixed item deleting after building new core.
 
-This fork will be deleted as soon as the original mod implements the bug-fixing code.
 
 ![Screenshot](./screenshot.png)
